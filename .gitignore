@@ -1,7 +1,16 @@
-data/raw/*
-data/processed/*
-models/*
+# Local Environment
 venv/
+.env
 __pycache__/
 .ipynb_checkpoints/
+
+# Data Files (Crucial: Prevents uploading large CSVs)
+data/raw/*
+data/processed/*
+
+# Model Binaries
+models/*
+
+# OS Files
 .DS_Store
+Thumbs.db
