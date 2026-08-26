@@ -30,6 +30,17 @@ See `README.md` for full methodology context.
       0.8535, which is expected: it has no per-item learned factor, only metadata. Not yet used
       genome_features.csv (only ~22% movie coverage) or blended with MF - candidates for later.
       Saved to `models/content_based.pkl` (gitignored).
+- [x] **4c. Hybrid blend** — `src/models.py` (`HybridModel`, `build_hybrid_model`)
+      Blends MF + ContentBased predictions with a weight that scales with how many training
+      ratings the target movie had: `alpha(count) = max_alpha * count / (count + k)`
+      (max_alpha=0.8, k=10) - same shrinkage idea as BiasBaseline/genre affinity. Weight curve
+      grounded in a grid search across rating-count buckets on held-out data (0 ratings -> best
+      alpha~0.3 but noisy/small-n; 1-5 -> 0.45; 5-20 -> 0.60; 20-100 -> 0.70; 100+ -> 0.80).
+      Validated system-level estimate (87.3% regular / 12.7% cold rows, matching test.csv's real
+      composition): pure MF 0.8713 -> **Hybrid 0.8598** (~1.3% relative RMSE improvement).
+      Not persisted separately (would duplicate the ~90MB MF pickle) - built on demand via
+      `build_hybrid_model(train_ratings)`, which loads the two saved models and recomputes the
+      (cheap) rating-count table.
 - [ ] **5. Evaluation** — `src/evaluation.py`
       K-fold cross-validation, RMSE tracking against the competition metric.
 - [ ] **6. Reporting** — `reports/`, `figures/`

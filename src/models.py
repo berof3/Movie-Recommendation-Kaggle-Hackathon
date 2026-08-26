@@ -429,6 +429,51 @@ class ContentBasedModel:
         return np.clip(preds, 0.5, 5.0)
 
 
+class HybridModel:
+    """Blends MatrixFactorization and ContentBasedModel predictions, weighting MF more heavily
+    the more training ratings its target movie had. Grid-searching the optimal blend weight per
+    rating-count bucket on held-out data showed a clear, monotonic pattern: ~0 for movies unseen
+    in training (MF has literally no item-specific signal there, matching the earlier cold-start
+    finding), rising smoothly to ~0.8 for movies with 100+ training ratings (see TASKS.md for the
+    full bucket table). That's fit here with a saturating curve rather than a lookup table -
+    the same shrinkage idea already used in BiasBaseline and ContentBasedModel's genre affinity:
+
+        alpha(count) = max_alpha * count / (count + k)
+
+    k=10 means a movie needs about 10 training ratings for its blend weight to reach half of
+    max_alpha.
+    """
+
+    def __init__(self, mf_model, cb_model, movie_rating_counts, max_alpha=0.8, k=10.0):
+        self.mf_model = mf_model
+        self.cb_model = cb_model
+        self.movie_rating_counts = movie_rating_counts  # pd.Series of training rating count, indexed by movieId
+        self.max_alpha = max_alpha
+        self.k = k
+
+    def _alpha(self, movie_ids):
+        counts = pd.Series(np.asarray(movie_ids)).map(self.movie_rating_counts).fillna(0.0).to_numpy()
+        return self.max_alpha * counts / (counts + self.k)
+
+    def predict(self, user_ids, movie_ids):
+        alpha = self._alpha(movie_ids)
+        mf_preds = self.mf_model.predict(user_ids, movie_ids)
+        cb_preds = self.cb_model.predict(user_ids, movie_ids)
+        return np.clip(alpha * mf_preds + (1 - alpha) * cb_preds, 0.5, 5.0)
+
+
+def build_hybrid_model(ratings, mf_model=None, cb_model=None, **kwargs):
+    """Convenience constructor: loads the saved MF/CB models if not given, and computes
+    movie_rating_counts fresh from `ratings` (cheap - a single groupby, no need to persist it
+    separately). Note HybridModel is not itself saved via save_model(): pickling it would
+    duplicate the ~90MB matrix_factorization.pkl unnecessarily, since HybridModel just holds
+    references to the two already-saved models plus a small count table rebuilt on demand."""
+    mf_model = mf_model if mf_model is not None else load_model("matrix_factorization")
+    cb_model = cb_model if cb_model is not None else load_model("content_based")
+    counts = ratings.groupby("movieId").size()
+    return HybridModel(mf_model, cb_model, counts, **kwargs)
+
+
 def save_model(model, name):
     os.makedirs(MODELS_DIR, exist_ok=True)
     path = os.path.join(MODELS_DIR, f"{name}.pkl")
