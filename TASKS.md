@@ -19,9 +19,17 @@ See `README.md` for full methodology context.
       Trained models saved to `models/*.pkl` (gitignored). Known gap: 12.7% of test.csv movies
       never appear in train.csv (item cold start) - CF alone falls back to global mean + user
       bias for those, which is exactly where content-based features should help.
-- [ ] **4b. Content-based filtering** — `src/models.py`
-      Use `data/processed/movies_features.csv` / `genome_features.csv` to cover the item
-      cold-start gap and (later) blend with the CF model.
+- [x] **4b. Content-based filtering** — `src/models.py`
+      Ridge regression on movie genres/year/runtime/budget + the user's own taste profile
+      (overall average, per-genre average shrunk toward it), predicting the *residual* from the
+      user's average rather than the rating directly (avoids a collinearity/leakage trap - see
+      commit history). Validated on a true item cold-start holdout (12.7% of movies' ratings
+      entirely withheld, matching test.csv's real cold-start rate): GlobalMean 1.0663,
+      BiasBaseline/MF-fallback 0.9816, **ContentBased 0.9275** - the improvement this model
+      exists for. On regular (non-cold) rows it scores 0.9223, worse than MatrixFactorization's
+      0.8535, which is expected: it has no per-item learned factor, only metadata. Not yet used
+      genome_features.csv (only ~22% movie coverage) or blended with MF - candidates for later.
+      Saved to `models/content_based.pkl` (gitignored).
 - [ ] **5. Evaluation** — `src/evaluation.py`
       K-fold cross-validation, RMSE tracking against the competition metric.
 - [ ] **6. Reporting** — `reports/`, `figures/`
