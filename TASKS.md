@@ -5,8 +5,10 @@ See `README.md` for full methodology context.
 
 - [x] **1. Data ingestion** — `src/data_loader.py`
       Downloads competition data via Kaggle API into `data/raw/` (skips if already present).
-- [ ] **2. Exploratory Data Analysis** — `notebooks/01_eda.ipynb`
-      Rating distribution, matrix sparsity, user/item activity, genre breakdown, tag genome overview.
+- [x] **2. Exploratory Data Analysis** — `notebooks/01_eda.ipynb`
+      Rating distribution, matrix sparsity, user/item activity, genre breakdown, tag genome
+      overview. Executed end to end against the real data (10M ratings, 62,423 movies): 99.87%
+      matrix sparsity, rating mean 3.53, most-rated movie Shawshank Redemption (32,831 ratings).
 - [x] **3. Feature engineering / preprocessing** — `src/preprocessing.py`
       Builds `data/processed/movies_features.csv` (multi-hot genres, release year, cleaned IMDb
       director/runtime/budget, `has_imdb_data` flag — full movie coverage) and
@@ -41,8 +43,26 @@ See `README.md` for full methodology context.
       Not persisted separately (would duplicate the ~90MB MF pickle) - built on demand via
       `build_hybrid_model(train_ratings)`, which loads the two saved models and recomputes the
       (cheap) rating-count table.
-- [ ] **5. Evaluation** — `src/evaluation.py`
-      K-fold cross-validation, RMSE tracking against the competition metric.
+- [x] **5. Evaluation** — `src/evaluation.py`
+      5-fold CV (row-level, shared splits across models for a fair comparison), full rigor
+      including MatrixFactorization at full convergence per fold (chunked/checkpointed to
+      `models/cv/` - each fold takes ~30-45 min). Results (mean ± std across 5 folds):
+
+      | Model | mean RMSE | std |
+      |---|---|---|
+      | GlobalMeanBaseline | 1.0611 | 0.0006 |
+      | BiasBaseline | 0.8654 | 0.0005 |
+      | ContentBasedModel | 0.9245 | 0.0006 |
+      | MatrixFactorization | 0.8663 | 0.0022 |
+
+      All low-variance/robust across folds. MatrixFactorization's CV mean (0.8663) is a bit
+      higher than the earlier single-holdout number (0.8535) - expected and honest: CV here uses
+      80/20 splits (less training data per fold) vs. the original 95/5 holdout. HybridModel
+      wasn't re-run through full CV (would mean re-deriving cold-start-holdout numbers per fold
+      too); its validated system-level estimate (0.8598, see 4c) stands as the reported number.
+      `generate_submission()` produces the actual Kaggle submission (`submission.csv`, gitignored
+      - regenerable, not source) from the HybridModel trained on all of train.csv; verified its
+      format exactly matches `sample_submission.csv` (same columns, row count, Id set).
 - [ ] **6. Reporting** — `reports/`, `figures/`
       Final performance analysis and visualizations.
 

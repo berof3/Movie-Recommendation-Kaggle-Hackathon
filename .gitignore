@@ -11,6 +11,9 @@ data/processed/*
 # Model Binaries
 models/*
 
+# Generated Kaggle submissions (large, regenerable - not source)
+submission*.csv
+
 # OS Files
 .DS_Store
 Thumbs.db
