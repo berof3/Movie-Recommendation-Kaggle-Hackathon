@@ -63,8 +63,16 @@ See `README.md` for full methodology context.
       `generate_submission()` produces the actual Kaggle submission (`submission.csv`, gitignored
       - regenerable, not source) from the HybridModel trained on all of train.csv; verified its
       format exactly matches `sample_submission.csv` (same columns, row count, Id set).
-- [ ] **6. Reporting** — `reports/`, `figures/`
-      Final performance analysis and visualizations.
+- [x] **6. Reporting** — `reports/final_report.md`, `figures/`, `notebooks/02_results_report.ipynb`
+      Written summary of the full pipeline, methodology, and results (including the real bugs
+      hit and fixed along the way), with three figures: 5-fold CV model comparison, hybrid
+      blending's impact per scenario, and the blend-weight curve with its empirical grounding.
+      Honest limitations section (genome features unused, hybrid not re-run through full CV,
+      noisy middle blend-weight buckets, no true ensembling beyond one blend weight).
+
+## Pipeline complete
+All 6 stages done. See `reports/final_report.md` for the full write-up and `submission.csv`
+(gitignored, regenerate via `src/evaluation.py:generate_submission()`) for the Kaggle deliverable.
 
 ## Notes
 - Update this file (check off items, add sub-tasks as they emerge) as work progresses — it's the
