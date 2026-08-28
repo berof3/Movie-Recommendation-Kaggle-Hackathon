@@ -40,7 +40,7 @@ The pipeline is complete end to end - see [`reports/final_report.md`](reports/fi
 
 ![Model comparison, 5-fold CV](figures/model_comparison_cv.png)
 
-**Final hybrid system**, weighted to match `test.csv`'s real composition (87.3% regular rows / 12.7% item cold-start rows — movies never seen in `train.csv`):
+**Final hybrid system**, weighted to match `test.csv`'s real composition (87.3% regular rows / 12.7% item cold-start rows - movies never seen in `train.csv`):
 
 | Scenario | MF-only system | Hybrid system |
 |---|---|---|
@@ -50,7 +50,7 @@ The pipeline is complete end to end - see [`reports/final_report.md`](reports/fi
 
 ![Hybrid blending impact](figures/hybrid_impact.png)
 
-Blending in content-based predictions — weighted by how many training ratings each movie had — improves RMSE in every scenario, most sharply on item cold start (~5.5% relative), for an overall **~1.3% relative RMSE improvement** over matrix factorization alone. The final Kaggle submission (`submission.csv`, gitignored — regenerate via `src/evaluation.py`'s `generate_submission()`) is produced by this hybrid model trained on all of `train.csv`.
+Blending in content-based predictions - weighted by how many training ratings each movie had - improves RMSE in every scenario, most sharply on item cold start (~5.5% relative), for an overall **~1.3% relative RMSE improvement** over matrix factorization alone. The final Kaggle submission (`submission.csv`, gitignored - regenerate via `src/evaluation.py`'s `generate_submission()`) is produced by this hybrid model trained on all of `train.csv`.
 
 ## Setup and Installation
 1. Clone the repository:
